@@ -53,5 +53,8 @@ def process_reg():
         db.session.commit()
         flash('Вы успешно зарегистрировались') # тоже использовать для deja vu words при поиске слов
         return redirect(url_for('user.login'))
-    flash('Пожалуйста, исправьте ошибки в форме регистрации')
-    return redirect(url_for('user.register'))
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'Ошибка в поле {getattr(form, field).label.text}: {error}')
+        return redirect(url_for('user.register'))
