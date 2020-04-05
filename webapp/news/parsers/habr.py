@@ -37,3 +37,4 @@ def get_habr_snippets():
         url = news.find('a', class_='post__title_link')['href']
         published = news.find('span', class_='post__time').text
         published = parse_habr_date(published)
+        save_news(title, url, published)
