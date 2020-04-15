@@ -4,6 +4,8 @@ import platform
 
 from bs4 import BeautifulSoup
 
+from webapp.db import db
+from webapp.news.models import News
 from webapp.news.parsers.utils import get_html, save_news
 
 if platform.system() == 'Windows':
@@ -25,7 +27,7 @@ def parse_habr_date(date_str):
         return datetime.now()
 
 
-def get_habr_snippets():
+def get_news_snippets():
     html = get_html('https://habr.com/ru/search/?target_type=posts&q=python&order_by=date')
     if not html:
         return False
@@ -38,3 +40,16 @@ def get_habr_snippets():
         published = news.find('span', class_='post__time').text
         published = parse_habr_date(published)
         save_news(title, url, published)
+
+
+def get_news_content():
+    news_without_text = News.query.filter(News.text.is_(None)) # is_ позволяет сделать сравнение на идентичность, не используется .all(), и все равно можно сделать цикл
+    for news in news_without_text:
+        html = get_html(news.url)
+        if html:
+            soup = BeautifulSoup(html, 'html.parser')
+            news_text = soup.find('div', class_='post__text-html').decode_contents() # decode_contents() показывает не просто текст, а html странички
+            if news_text:
+                news.text = news_text
+                db.session.add(news)
+                db.session.commit()
